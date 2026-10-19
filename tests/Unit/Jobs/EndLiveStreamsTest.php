@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Enums\LivePlatform;
 use App\Jobs\EndLiveStreams;
+use App\Models\Notification;
 use App\Models\User;
 
-it('clears the streams that ran out', function (): void {
-    $live = ['live_platform' => LivePlatform::YouTube, 'live_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'];
-    $ended = User::factory()->create([...$live, 'live_ends_at' => now()->subMinute()]);
-    $running = User::factory()->create([...$live, 'live_ends_at' => now()->addHour()]);
+it('clears the streams that ran out, with their notifications', function (): void {
+    $ended = User::factory()->live()->create(['live_ends_at' => now()->subMinute()]);
+    $running = User::factory()->live()->create();
+    $endedNotification = Notification::factory()->wentLive()->create(['actor_id' => $ended->id]);
+    $runningNotification = Notification::factory()->wentLive()->create(['actor_id' => $running->id]);
 
     dispatch_sync(new EndLiveStreams());
 
@@ -17,5 +18,7 @@ it('clears the streams that ran out', function (): void {
         ->live_platform->toBeNull()
         ->live_url->toBeNull()
         ->live_ends_at->toBeNull()
-        ->and($running->refresh()->liveStream()?->url)->toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        ->and($running->refresh()->liveStream()?->url)->toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        ->and($endedNotification->fresh())->toBeNull()
+        ->and($runningNotification->fresh())->not->toBeNull();
 });

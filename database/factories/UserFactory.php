@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\LivePlatform;
 use App\Enums\RemotesFrom;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -58,6 +59,18 @@ final class UserFactory extends Factory
             'location' => null,
             'website' => null,
             'company' => null,
+        ]);
+    }
+
+    /**
+     * Streaming on YouTube for another two hours.
+     */
+    public function live(): self
+    {
+        return $this->state(fn (): array => [
+            'live_platform' => LivePlatform::YouTube,
+            'live_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            'live_ends_at' => now()->addHours(2),
         ]);
     }
 

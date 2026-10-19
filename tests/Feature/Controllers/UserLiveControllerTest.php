@@ -3,17 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\LivePlatform;
+use App\Enums\NotificationType;
 use App\Models\Commit;
 use App\Models\User;
-
-function liveUser(): User
-{
-    return User::factory()->create([
-        'live_platform' => LivePlatform::YouTube,
-        'live_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        'live_ends_at' => now()->addHours(2),
-    ]);
-}
 
 it('goes live with a YouTube stream for a few hours', function (string $url): void {
     $user = User::factory()->create();
@@ -39,8 +31,34 @@ it('goes live with a YouTube stream for a few hours', function (string $url): vo
     'short link' => 'https://youtu.be/dQw4w9WgXcQ',
 ]);
 
+it('tells their followers only when asked to', function (array $payload, bool $notifies): void {
+    $user = User::factory()->create();
+    $follower = User::factory()->create();
+    $user->followers()->attach($follower);
+
+    $this->actingAs($user)
+        ->put(route('user-live.update'), ['url' => 'https://youtu.be/dQw4w9WgXcQ', 'hours' => 2, ...$payload])
+        ->assertRedirect();
+
+    expect($follower->notifications()->where('type', NotificationType::WentLive)->exists())->toBe($notifies);
+})->with([
+    'asked' => [['notify' => true], true],
+    'declined' => [['notify' => false], false],
+    'not asked' => [[], false],
+]);
+
+it('rejects a notify that is not a yes or no', function (): void {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->putJson(route('user-live.update'), ['url' => 'https://youtu.be/dQw4w9WgXcQ', 'hours' => 2, 'notify' => 'loudly'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('notify');
+
+    expect($user->refresh()->live_url)->toBeNull();
+});
+
 it('shows the live marker on their commits in the log', function (): void {
-    $user = liveUser();
+    $user = User::factory()->live()->create();
     Commit::factory()->for($user)->create();
 
     $this->actingAs(User::factory()->create())
@@ -84,7 +102,7 @@ it('takes between one and twelve hours', function (mixed $hours): void {
 ]);
 
 it('ends the stream', function (): void {
-    $user = liveUser();
+    $user = User::factory()->live()->create();
 
     $this->actingAs($user)->fromRoute('user.show', $user)
         ->delete(route('user-live.destroy'))
@@ -100,7 +118,7 @@ it('ends the stream', function (): void {
 });
 
 it('stops showing the stream once its hours are up', function (): void {
-    $user = liveUser();
+    $user = User::factory()->live()->create();
 
     $this->travel(2)->hours();
 

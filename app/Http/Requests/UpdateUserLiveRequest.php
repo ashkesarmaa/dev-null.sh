@@ -25,6 +25,7 @@ final class UpdateUserLiveRequest extends FormRequest
         return [
             'url' => ['bail', 'required', 'string', 'max:2048', new LiveStreamUrl()],
             'hours' => ['required', 'integer', 'between:1,'.User::MAX_LIVE_HOURS],
+            'notify' => ['boolean'],
         ];
     }
 

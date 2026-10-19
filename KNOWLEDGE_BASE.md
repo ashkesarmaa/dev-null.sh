@@ -283,11 +283,11 @@ Sources: [Pastéis setting](resources/js/components/pasteis-mode-setting.tsx), [
 
 ### Notifications
 
-Open **Notifications** to read in-app activity: follows, replies, quotes, mentions, stars, and moderation messages. The navigation shows unread activity. Related activity is grouped, with expandable details, and filters let you choose categories or all/none. Opening the inbox marks relevant notifications read. You can follow back or unfollow from follower notifications.
+Open **Notifications** to read in-app activity: follows, replies, quotes, mentions, stars, live streams, and moderation messages. The navigation shows unread activity. Related activity is grouped, with expandable details, and filters let you choose categories or all/none. Opening the inbox marks relevant notifications read. You can follow back or unfollow from follower notifications.
 
-Pending replies, quotes, and mentions wait for approval before notifying others. Self-actions do not notify you; mentioning the parent or quoted author does not duplicate their reply or quote notification. A new follower notifies only once even if they unfollow and follow again. Deleted or unavailable sources, mutes, and blocks affect which notifications remain visible. Rejected commits can produce a moderation message with a reason, without revealing a moderator's identity.
+Pending replies, quotes, and mentions wait for approval before notifying others. Self-actions do not notify you; mentioning the parent or quoted author does not duplicate their reply or quote notification. A new follower notifies only once even if they unfollow and follow again. Going live can notify your followers when you leave **Notify followers** on; that notification disappears once the stream ends. Deleted or unavailable sources, mutes, and blocks affect which notifications remain visible. Rejected commits can produce a moderation message with a reason, without revealing a moderator's identity.
 
-Sources: [notifications page](resources/js/pages/notification/index.tsx), [notification filtering](app/Queries/NotificationBuilder.php), [grouping](app/Queries/NotificationGroupsQuery.php), [moderation notifications](app/Actions/UpdateCommitStatuses.php).
+Sources: [notifications page](resources/js/pages/notification/index.tsx), [notification filtering](app/Queries/NotificationBuilder.php), [grouping](app/Queries/NotificationGroupsQuery.php), [moderation notifications](app/Actions/UpdateCommitStatuses.php), [live notifications](app/Actions/CreateLiveNotifications.php).
 
 Livestream history: the notification requirements on [day one at 5:28:53](https://www.youtube.com/watch?v=6zCNQa3hNm0&t=19733s) explicitly included removing stale activity after an unfollow or deleted reply. The stated goal was to avoid both spam and notifications that “no longer make sense.”
 

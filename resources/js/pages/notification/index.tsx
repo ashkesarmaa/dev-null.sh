@@ -7,6 +7,7 @@ import {
     ChevronDown,
     MessageSquareReply,
     Quote,
+    Radio,
     Star,
     UserCheck,
     UserPlus,
@@ -803,6 +804,7 @@ function NotificationContent({
         mentioned: AtSign,
         approved: Check,
         rejected: X,
+        went_live: Radio,
     }[notification.type];
     const icon = (
         <Icon
@@ -815,7 +817,7 @@ function NotificationContent({
         />
     );
     const href =
-        notification.type === 'followed' ||
+        notification.commit === null ||
         (!summary && notification.type === 'starred')
             ? show(actor)
             : CommitController.show({
@@ -841,9 +843,10 @@ function NotificationContent({
         mentioned: 'mentioned you',
         approved: 'Your commit was approved',
         rejected: 'Your commit was rejected',
+        went_live: 'is live',
     }[notification.type];
     const excerpt =
-        notification.type === 'followed' || isImageOnly ? null : isOwnCommit ? (
+        notification.commit === null || isImageOnly ? null : isOwnCommit ? (
             <OwnCommitExcerpt segments={notification.commit.body_segments} />
         ) : (
             <CommitBodyExcerpt

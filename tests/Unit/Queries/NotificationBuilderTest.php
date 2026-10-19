@@ -141,6 +141,20 @@ it('hides stars once the commit is rejected', function (): void {
     expect(Notification::query()->where('type', NotificationType::Starred)->relevant()->exists())->toBeFalse();
 });
 
+it('keeps live notifications while the stream runs', function (): void {
+    $notification = Notification::factory()->wentLive()->create();
+
+    expect(Notification::query()->relevant()->sole()->is($notification))->toBeTrue();
+});
+
+it('hides live notifications once the stream runs out', function (): void {
+    Notification::factory()->wentLive()->create();
+
+    $this->travel(2)->hours();
+
+    expect(Notification::query()->relevant()->exists())->toBeFalse();
+});
+
 it('deletes stars along with the starred commit', function (): void {
     $notification = Notification::factory()->starred()->create();
 
@@ -158,6 +172,7 @@ it('deletes notifications along with the actor', function (Notification $notific
     'replied' => fn (): Notification => Notification::factory()->replied()->create(),
     'quoted' => fn (): Notification => Notification::factory()->quoted()->create(),
     'starred' => fn (): Notification => Notification::factory()->starred()->create(),
+    'went live' => fn (): Notification => Notification::factory()->wentLive()->create(),
 ]);
 
 it('deletes notifications along with the recipient', function (): void {
@@ -181,6 +196,7 @@ it('hides notifications from muted actors until they are unmuted', function (Not
     'replied' => fn (): Notification => Notification::factory()->replied()->create(),
     'mentioned' => fn (): Notification => Notification::factory()->mentioned()->create(),
     'starred' => fn (): Notification => Notification::factory()->starred()->create(),
+    'went live' => fn (): Notification => Notification::factory()->wentLive()->create(),
 ]);
 
 it('hides replies, mentions and stars across a block in either direction', function (string $state, bool $recipientBlocks): void {

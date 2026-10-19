@@ -2,7 +2,7 @@ import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { update } from '@/actions/App/Http/Controllers/UserPasteisModeController';
-import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 export function PasteisModeSetting() {
     const { auth } = usePage().props;
@@ -54,26 +54,13 @@ export function PasteisModeSetting() {
                         You still receive pastéis from others.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    role="switch"
-                    aria-checked={enabled}
+                <Switch
+                    checked={enabled}
+                    onCheckedChange={toggle}
                     aria-labelledby="pasteis-mode-label"
                     aria-describedby="pasteis-mode-description"
                     aria-disabled={processing}
-                    onClick={toggle}
-                    className={cn(
-                        'mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent p-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                        enabled ? 'bg-primary' : 'bg-muted-foreground/30',
-                    )}
-                >
-                    <span
-                        className={cn(
-                            'size-4.5 rounded-full bg-background shadow-sm transition-transform motion-reduce:transition-none',
-                            enabled && 'translate-x-5',
-                        )}
-                    />
-                </button>
+                />
             </div>
         </section>
     );

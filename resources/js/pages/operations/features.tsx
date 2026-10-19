@@ -3,10 +3,10 @@ import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import FeatureController from '@/actions/App/Http/Controllers/FeatureController';
 import { Section } from '@/components/operations/section';
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import OperationsLayout from '@/layouts/operations/layout';
 import { formatCount } from '@/lib/numbers';
-import { cn } from '@/lib/utils';
 import type { Feature } from '@/types';
 
 const FEATURES: Record<
@@ -74,27 +74,14 @@ function FeatureRow({ feature }: { feature: Feature }) {
                     {description}
                 </p>
             </div>
-            <button
-                type="button"
-                role="switch"
-                aria-checked={feature.enabled}
+            <Switch
+                checked={feature.enabled}
+                onCheckedChange={toggle}
                 aria-labelledby={labelId}
                 aria-describedby={descriptionId}
                 aria-disabled={processing}
-                onClick={toggle}
-                className={cn(
-                    'mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent p-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                    feature.enabled ? 'bg-primary' : 'bg-muted-foreground/30',
-                )}
                 data-test={`feature-${feature.name}-switch`}
-            >
-                <span
-                    className={cn(
-                        'size-4.5 rounded-full bg-background shadow-sm transition-transform motion-reduce:transition-none',
-                        feature.enabled && 'translate-x-5',
-                    )}
-                />
-            </button>
+            />
         </li>
     );
 }

@@ -22,7 +22,7 @@ export type NotificationGroup = Notification & {
 
 export type Notification =
     | (BaseNotification & {
-          type: 'followed';
+          type: 'followed' | 'went_live';
           commit_id: null;
           subject_id: null;
           commit: null;

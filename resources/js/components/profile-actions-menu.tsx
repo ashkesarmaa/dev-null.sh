@@ -19,9 +19,15 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import type { User } from '@/types';
 
-const hours = Array.from({ length: 12 }, (_, index) => index + 1);
+/**
+ * Mirrors `User::MAX_LIVE_HOURS`, the longest a stream can be shown as live.
+ */
+const maxHours = 12;
+
+const defaultHours = 2;
 
 /**
  * The quick actions on your own profile, where other people's profiles have the mute and block menu.
@@ -29,6 +35,10 @@ const hours = Array.from({ length: 12 }, (_, index) => index + 1);
 export function ProfileActionsMenu({ user }: { user: Pick<User, 'live'> }) {
     const [isGoingLive, setIsGoingLive] = useState(false);
     const [isEnding, setIsEnding] = useState(false);
+    const [hours, setHours] = useState(defaultHours);
+    const [notify, setNotify] = useState(true);
+    const hoursLabel = hours === 1 ? '1 hour' : `${hours} hours`;
+    const filled = ((hours - 1) / (maxHours - 1)) * 100;
 
     const endStream = () =>
         router.visit(UserLiveController.destroy(), {
@@ -88,6 +98,8 @@ export function ProfileActionsMenu({ user }: { user: Pick<User, 'live'> }) {
                         options={{ preserveScroll: true }}
                         onSuccess={() => {
                             setIsGoingLive(false);
+                            setHours(defaultHours);
+                            setNotify(true);
                             router.flushAll();
                         }}
                         resetOnSuccess
@@ -111,24 +123,71 @@ export function ProfileActionsMenu({ user }: { user: Pick<User, 'live'> }) {
                                     <InputError message={errors.url} />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="live-hours">For</Label>
-                                    <select
+                                <div className="grid gap-3">
+                                    <div className="flex items-baseline justify-between gap-4">
+                                        <Label htmlFor="live-hours">For</Label>
+                                        <output
+                                            htmlFor="live-hours"
+                                            className="min-w-[8ch] text-right font-mono text-[13px] text-muted-foreground tabular-nums"
+                                        >
+                                            {hoursLabel}
+                                        </output>
+                                    </div>
+                                    <input
                                         id="live-hours"
+                                        type="range"
                                         name="hours"
-                                        defaultValue={2}
-                                        className="flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                                        data-test="live-hours-select"
+                                        min={1}
+                                        max={maxHours}
+                                        value={hours}
+                                        onChange={(event) =>
+                                            setHours(
+                                                event.currentTarget
+                                                    .valueAsNumber,
+                                            )
+                                        }
+                                        aria-valuetext={hoursLabel}
+                                        style={{
+                                            background: `linear-gradient(to right, var(--primary) ${filled}%, var(--muted) ${filled}%)`,
+                                        }}
+                                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:bg-background [&::-moz-range-thumb]:shadow-sm [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:bg-background [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:transition-transform active:[&::-webkit-slider-thumb]:scale-110 motion-reduce:[&::-webkit-slider-thumb]:transition-none"
+                                        data-test="live-hours-slider"
+                                    />
+                                    <div
+                                        aria-hidden
+                                        className="flex justify-between font-mono text-xs text-muted-foreground"
                                     >
-                                        {hours.map((count) => (
-                                            <option key={count} value={count}>
-                                                {count === 1
-                                                    ? '1 hour'
-                                                    : `${count} hours`}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <span>1h</span>
+                                        <span>{maxHours}h</span>
+                                    </div>
                                     <InputError message={errors.hours} />
+                                </div>
+
+                                <div className="flex items-start justify-between gap-6">
+                                    <div className="min-w-0 space-y-1">
+                                        <p
+                                            id="live-notify-label"
+                                            className="text-sm leading-none font-medium"
+                                        >
+                                            Notify followers
+                                        </p>
+                                        <p
+                                            id="live-notify-description"
+                                            className="text-sm text-muted-foreground"
+                                        >
+                                            Your followers get a notification
+                                            that you are live, until the stream
+                                            ends.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        name="notify"
+                                        checked={notify}
+                                        onCheckedChange={setNotify}
+                                        aria-labelledby="live-notify-label"
+                                        aria-describedby="live-notify-description"
+                                        data-test="live-notify-switch"
+                                    />
                                 </div>
 
                                 <DialogFooter className="mt-2 gap-2">

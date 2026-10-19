@@ -66,6 +66,17 @@ final class NotificationFactory extends Factory
     }
 
     /**
+     * The actor went live and is still streaming.
+     */
+    public function wentLive(): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => NotificationType::WentLive,
+            'actor_id' => User::factory()->live(),
+        ]);
+    }
+
+    /**
      * A star from the actor on one of the recipient's approved commits, or on the given one.
      */
     public function starred(?Commit $commit = null): self

@@ -601,3 +601,13 @@ it('rejects invalid combinations of categories', function (): void {
         ->getJson(route('notification.index', ['type' => 'replies,secret']))
         ->assertUnprocessable()->assertJsonValidationErrors('type');
 });
+
+it('shows that someone the user follows is live', function (): void {
+    $user = User::factory()->create();
+    $notification = Notification::factory()->for($user, 'recipient')->wentLive()->create();
+
+    $this->actingAs($user)->get(route('notification.index'))
+        ->assertInertia(fn ($page) => $page->has('notifications.data', 1)
+            ->where('notifications.data.0.type', 'went_live')
+            ->where('notifications.data.0.actor.username', $notification->actor->username));
+});
