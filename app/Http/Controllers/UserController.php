@@ -13,6 +13,7 @@ use App\Http\Requests\ShowUserRequest;
 use App\Models\Commit;
 use App\Models\User;
 use App\Models\UserTimeout;
+use App\Queries\FollowersYouKnowQuery;
 use App\Queries\PinnedCommitQuery;
 use App\Queries\PushAccessQuery;
 use App\Queries\UserAchievementsQuery;
@@ -31,7 +32,7 @@ final readonly class UserController
     /**
      * Profiles are public, so guests and crawlers read the same page, with the profile's link preview.
      */
-    public function show(ShowUserRequest $request, #[CurrentUser] ?User $currentUser, User $user, UserActivityQuery $activity, UserStreakQuery $streaks, UserAchievementsQuery $achievements, PushAccessQuery $pushAccess, UserCommitsQuery $commits, PinnedCommitQuery $pinned, PageMetadata $metadata): Response
+    public function show(ShowUserRequest $request, #[CurrentUser] ?User $currentUser, User $user, UserActivityQuery $activity, UserStreakQuery $streaks, UserAchievementsQuery $achievements, PushAccessQuery $pushAccess, UserCommitsQuery $commits, PinnedCommitQuery $pinned, FollowersYouKnowQuery $followersYouKnow, PageMetadata $metadata): Response
     {
         $blockerId = $currentUser?->blockerIdWith($user);
 
@@ -58,6 +59,9 @@ final readonly class UserController
             'isFollowing' => fn (): bool => $currentUser?->isFollowing($user) ?? false,
             'followsYou' => fn (): bool => $currentUser instanceof User && $user->isFollowing($currentUser),
             'isMuting' => fn (): bool => $currentUser?->isMuting($user) ?? false,
+            'followersYouKnow' => fn (): ?array => $currentUser instanceof User && $currentUser->isNot($user)
+                ? $followersYouKnow->preview($user, $currentUser)
+                : null,
             'canPush' => fn (): bool => $currentUser instanceof User
                 && $currentUser->canMessage($user)
                 && ! in_array($pushAccess->get($currentUser, $user), [PushAccess::Restricted, PushAccess::Closed], true),
