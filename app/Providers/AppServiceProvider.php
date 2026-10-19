@@ -124,6 +124,9 @@ final class AppServiceProvider extends ServiceProvider
         // Social graph...
         RateLimiter::for('follows', fn (Request $request): Limit => Limit::perMinute(30)->by($this->userId($request)));
 
+        // Going live can notify every follower, so going live and ending the stream over and over must not spam them...
+        RateLimiter::for('live', fn (Request $request): Limit => Limit::perHour(10)->by($this->userId($request)));
+
         // People search, mention suggestions, and hover cards share one bucket...
         RateLimiter::for('people', fn (Request $request): Limit => Limit::perMinute(120)->by(
             $request->user() instanceof User ? $this->userId($request) : 'ip:'.$request->ip(),

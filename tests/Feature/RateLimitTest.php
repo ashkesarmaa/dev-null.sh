@@ -38,6 +38,14 @@ dataset('rate limits', [
         30,
         60,
     ],
+    'live streams' => [
+        fn (): array => [
+            ['PUT', route('user-live.update')],
+            ['DELETE', route('user-live.destroy')],
+        ],
+        10,
+        3600,
+    ],
     'people lookups' => [
         fn (): array => [
             ['GET', route('user-search.index', ['q' => 'nuno'])],

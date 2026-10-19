@@ -394,8 +394,8 @@ Route::middleware('auth')->group(function (): void {
     Route::put('settings/remotes', [UserRemotesController::class, 'update'])->name('user-remotes.update');
 
     // User Live...
-    Route::put('settings/live', [UserLiveController::class, 'update'])->name('user-live.update');
-    Route::delete('settings/live', [UserLiveController::class, 'destroy'])->name('user-live.destroy');
+    Route::put('settings/live', [UserLiveController::class, 'update'])->middleware('throttle:live')->name('user-live.update');
+    Route::delete('settings/live', [UserLiveController::class, 'destroy'])->middleware('throttle:live')->name('user-live.destroy');
 
     // Appearance...
     Route::get('settings/appearance', fn () => Inertia::render('appearance/update'))->name('appearance.edit');
