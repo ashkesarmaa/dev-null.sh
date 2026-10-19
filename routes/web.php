@@ -27,6 +27,7 @@ use App\Http\Controllers\CommitSearchController;
 use App\Http\Controllers\CommitSitemapController;
 use App\Http\Controllers\CommitStarController;
 use App\Http\Controllers\CommitStarCountController;
+use App\Http\Controllers\CommitStargazerController;
 use App\Http\Controllers\CommitStatusController;
 use App\Http\Controllers\CommitTranslationController;
 use App\Http\Controllers\ConversationArchiveController;
@@ -202,6 +203,9 @@ Route::get('commits/{commit}/replies', [CommitReplyController::class, 'index'])
     ->name('commit-reply.index');
 Route::get('commits/{commit}/continuation', [CommitContinuationController::class, 'index'])
     ->name('commit-continuation.index');
+Route::get('commits/{commit}/stargazers', [CommitStargazerController::class, 'index'])
+    ->middleware('throttle:people')
+    ->name('commit-stargazer.index');
 
 // Search...
 Route::get('search', [SearchController::class, 'index'])

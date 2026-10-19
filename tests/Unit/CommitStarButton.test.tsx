@@ -54,12 +54,13 @@ async function render(
 }
 
 for (const status of ['approved', 'pending', 'rejected'] as const) {
-    void test(`authors see only their ${status} commit's star count`, async () => {
+    void test(`authors see their ${status} commit's star count, which opens its stargazers`, async () => {
         const body = await render({ id: 'author' }, { status });
 
         assert.match(body, /data-test="star-count-readonly"/);
         assert.match(body, /aria-label="2 stars"/);
-        assert.doesNotMatch(body, /<button\b/);
+        assert.doesNotMatch(body, /data-test="star-commit-button"/);
+        assert.match(body, /aria-label="See 2 stargazers"/);
     });
 }
 
@@ -78,8 +79,22 @@ for (const user of [null, { id: 'viewer' }]) {
         assert.match(body, /aria-pressed="false"/);
         assert.match(body, /aria-label="Star commit, 2 stars"/);
         assert.doesNotMatch(body, /data-test="star-count-readonly"/);
+        assert.match(body, /aria-label="See 2 stargazers"/);
     });
 }
+
+void test('a commit without stars has no stargazers to open', async () => {
+    const body = await render({ id: 'viewer' }, { stars_count: 0 });
+
+    assert.match(body, /aria-label="Star commit"/);
+    assert.doesNotMatch(body, /stargazers/);
+});
+
+void test('a single stargazer is counted in the singular', async () => {
+    const body = await render(null, { stars_count: 1 });
+
+    assert.match(body, /aria-label="See 1 stargazer"/);
+});
 
 for (const status of ['pending', 'rejected'] as const) {
     void test(`other readers cannot star a ${status} commit`, async () => {
@@ -101,6 +116,6 @@ for (const status of ['approved', 'pending', 'rejected'] as const) {
 
         assert.match(body, /data-test="star-count-readonly"/);
         assert.match(body, /aria-label="2 stars"/);
-        assert.doesNotMatch(body, /<button\b/);
+        assert.doesNotMatch(body, /data-test="star-commit-button"/);
     });
 }

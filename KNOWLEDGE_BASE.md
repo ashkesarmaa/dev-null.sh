@@ -270,7 +270,9 @@ Livestream history: on [day one at 5:17:38](https://www.youtube.com/watch?v=6zCN
 
 Star someone else's visible commit or reply to show appreciation, or unstar to remove that star. You cannot star your own commits. A star contributes to the displayed count and can notify the author; unstar removes that notification. Starring the same commit repeatedly does not add multiple stars. Stars are an engagement action, not a private reading list; use Saved for bookmarks.
 
-Sources: [star authorization](app/Http/Requests/CreateCommitStarRequest.php), [star notifications](app/Actions/CreateStarNotification.php), [unstar notifications](app/Actions/DeleteStarNotification.php).
+Click a commit's star count to see its **stargazers**: the people who starred it, newest star first, 30 at a time as you scroll, each with a follow button. Anyone who can see the commit can see its stargazers, including guests and the author. People across a block from you are left out of the list.
+
+Sources: [star authorization](app/Http/Requests/CreateCommitStarRequest.php), [star notifications](app/Actions/CreateStarNotification.php), [unstar notifications](app/Actions/DeleteStarNotification.php), [stargazers](app/Queries/CommitStargazersQuery.php).
 
 Livestream history: “Stars instead of likes” received immediate agreement on [day one at 4:30:03](https://www.youtube.com/watch?v=6zCNQa3hNm0&t=16203s), extending the platform's developer-oriented terminology.
 
