@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Commit;
+use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Str;
 
 final class ShowLogRequest extends FormRequest
 {
@@ -56,6 +60,21 @@ final class ShowLogRequest extends FormRequest
         $pending = $this->validated('pending', []);
 
         return $pending;
+    }
+
+    /**
+     * When the newest commit the user saw on their last visit to the Following log was committed, as their browser
+     * remembers it, unless another account visited it last in the same browser.
+     */
+    public function followingLastVisitAt(User $user): ?CarbonInterface
+    {
+        $lastVisit = $this->cookie('following_last_visit');
+
+        if (! is_string($lastVisit) || ! str_starts_with($lastVisit, $user->id.'|')) {
+            return null;
+        }
+
+        return rescue(fn (): ?CarbonInterface => Date::createFromFormat('Y-m-d\TH:i:s.uP', Str::after($lastVisit, '|')), report: false);
     }
 
     public function prepareForValidation(): void

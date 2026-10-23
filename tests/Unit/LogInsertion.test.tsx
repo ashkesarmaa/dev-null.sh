@@ -78,6 +78,16 @@ vi.doMock('@inertiajs/react', () => ({
     Head: () => null,
     Link: () => null,
     usePage: () => ({ props: { auth: { user: viewer } } }),
+    useRemember: (initial: unknown) => {
+        const index = cursor++;
+        if (!(index in slots)) slots[index] = initial;
+        return [
+            slots[index],
+            (value: unknown) => {
+                slots[index] = value;
+            },
+        ];
+    },
     usePoll: (_interval: number, options: () => ReloadOptions) => {
         pollOptions = options;
         return { stop: vi.fn() };
@@ -273,6 +283,7 @@ function insertAt(
                 commits,
                 isRanked: false,
                 suggestions: [],
+                catchUp: null,
             }),
         );
         for (const node of nodes) {

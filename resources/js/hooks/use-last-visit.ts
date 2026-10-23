@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
+import { setCookie } from '@/hooks/use-appearance';
 import { readStorage, writeStorage } from '@/lib/storage';
 import type { Commit, Log } from '@/types';
 
 const keyFor = (userId: string, log: Log): string =>
     `last-visit:${userId}:${log}`;
 
+/**
+ * Remembers when the newest commit the user saw in a log was committed. Following's is also sent to the server, so it can
+ * catch them up from the same point as the page loads.
+ */
 export function useLastVisit(
     userId: string,
     log: Log,
@@ -15,10 +20,16 @@ export function useLastVisit(
     const newestAt = commits[0]?.created_at;
 
     useEffect(() => {
-        if (newestAt !== undefined) {
-            writeStorage(key, newestAt);
+        if (newestAt === undefined) {
+            return;
         }
-    }, [key, newestAt]);
+
+        writeStorage(key, newestAt);
+
+        if (log === 'following') {
+            setCookie('following_last_visit', `${userId}|${newestAt}`);
+        }
+    }, [key, log, userId, newestAt]);
 
     if (lastVisitAt === '') {
         return null;

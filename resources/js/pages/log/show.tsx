@@ -1,5 +1,12 @@
 import type { CancelToken, PageProps } from '@inertiajs/core';
-import { Head, Link, router, usePage, usePoll } from '@inertiajs/react';
+import {
+    Head,
+    Link,
+    router,
+    usePage,
+    usePoll,
+    useRemember,
+} from '@inertiajs/react';
 import { ArrowUp } from 'lucide-react';
 import {
     useCallback,
@@ -9,6 +16,7 @@ import {
     useState,
 } from 'react';
 import LogController from '@/actions/App/Http/Controllers/LogController';
+import { CatchUp } from '@/components/catch-up';
 import { CommitComposer } from '@/components/commit-composer';
 import { useCommitDialogClosedCount } from '@/components/commit-composer-dialog';
 import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
@@ -25,18 +33,25 @@ import AppLayout from '@/layouts/app-layout';
 import { backgroundPollOptions } from '@/lib/background-poll';
 import { emojify } from '@/lib/emoji';
 import { cn } from '@/lib/utils';
-import type { Commit, CursorPaginated, Log } from '@/types';
+import type {
+    CatchUp as CatchUpData,
+    Commit,
+    CursorPaginated,
+    Log,
+} from '@/types';
 
 export default function Show({
     log,
     commits,
     isRanked,
     suggestions,
+    catchUp,
 }: {
     log: Log;
     commits: CursorPaginated<Commit>;
     isRanked: boolean;
     suggestions: Commit[];
+    catchUp: CatchUpData | null;
 }) {
     const {
         props: { auth },
@@ -326,6 +341,10 @@ export default function Show({
     }, [commits]);
 
     const firstSeenId = useLastVisit(viewerId, log, commits.data);
+    // The server works the catch-up out from the same last visit, which moves on as soon as this one starts, so it is kept
+    // for the rest of the visit, through reloads after posting or following and back from one of its commits.
+    const [visitCatchUp] = useRemember(catchUp, 'catch-up');
+    const [isCaughtUp, setIsCaughtUp] = useRemember(false, 'caught-up');
 
     const loadNewest = (count: number) => {
         if (isRanked || !count || loadingNew.current) {
@@ -623,6 +642,16 @@ export default function Show({
                     isBelowComposer={user !== null}
                     end="That's the root commit. There's nothing before it."
                     interlude={() => <WhoToFollowInLog />}
+                    lead={(stagedLane) =>
+                        visitCatchUp !== null && (
+                            <CatchUp
+                                catchUp={visitCatchUp}
+                                stagedLane={stagedLane}
+                                isCaughtUp={isCaughtUp}
+                                onCaughtUp={setIsCaughtUp}
+                            />
+                        )
+                    }
                     empty={
                         log === 'following' ? (
                             <EmptyFeed command="fatal: your log does not have any commits yet">
