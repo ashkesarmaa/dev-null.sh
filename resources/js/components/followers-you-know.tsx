@@ -59,7 +59,7 @@ export function FollowersYouKnow({
                         {index > 0 && (others > 0 ? ', ' : ' and ')}
                         <Link
                             href={show(person)}
-                            className="font-mono text-[13px] font-medium whitespace-nowrap text-foreground hover:underline"
+                            className="font-mono text-[13px] font-medium wrap-anywhere text-foreground hover:underline"
                         >
                             @{person.username}
                         </Link>
