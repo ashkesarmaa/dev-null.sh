@@ -6,7 +6,7 @@ use App\Models\User;
 
 it('lists the followers of a user whom the viewer follows', function (): void {
     $viewer = User::factory()->create();
-    $user = User::factory()->create(['username' => 'octocat']);
+    $user = User::factory()->create(['handle' => 'octocat']);
     $known = User::factory()->create();
     $stranger = User::factory()->create();
     $user->followers()->attach([$known->id, $stranger->id]);
@@ -18,7 +18,7 @@ it('lists the followers of a user whom the viewer follows', function (): void {
         ->assertInertia(fn ($page) => $page
             ->component('user/connections')
             ->where('type', 'followers_you_know')
-            ->where('user.username', 'octocat')
+            ->where('user.handle', 'octocat')
             ->has('users.data', 1)
             ->where('users.data.0.id', $known->id)
             ->where('users.data.0.is_followed', true));

@@ -1,11 +1,15 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { Fragment } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import AppLogoIcon from '@/components/app-logo-icon';
 import AppWordmark from '@/components/app-wordmark';
+import { CertificateText } from '@/components/certificate-text';
 import { GitHubIcon } from '@/components/github-icon';
 import { UserPreview } from '@/components/user-preview';
-import { typedProse } from '@/lib/code';
+import { typedProse, withoutCode } from '@/lib/code';
+import type { Color } from '@/lib/colors';
+import { colorsIn } from '@/lib/colors';
 import { mentionPattern } from '@/lib/mentions';
 import {
     hrefFor,
@@ -66,13 +70,13 @@ export function hasMention(segments: BodySegment[]): boolean {
 
 // Like X, the hidden parts of a shortened URL stay in the text, so copying it or a screen reader gets the whole URL.
 function ShortenedUrl({ url }: { url: string }) {
-    const { hiddenStart, shown, hiddenEnd } = shortenUrl(url);
+    const { hiddenStart, shown, hiddenEnd, cut } = shortenUrl(url);
     const shownCharacters = Array.from(shown);
 
     return (
         <>
             {hiddenStart && <span className="text-[0px]">{hiddenStart}</span>}
-            {hiddenEnd ? (
+            {cut ? (
                 <>
                     {shownCharacters.slice(0, -1).join('')}
                     {/* The ellipsis never wraps onto a line of its own. */}
@@ -85,7 +89,12 @@ function ShortenedUrl({ url }: { url: string }) {
                     </span>
                 </>
             ) : (
-                shown
+                <>
+                    {shown}
+                    {hiddenEnd && (
+                        <span className="text-[0px]">{hiddenEnd}</span>
+                    )}
+                </>
             )}
         </>
     );
@@ -94,12 +103,12 @@ function ShortenedUrl({ url }: { url: string }) {
 // Like a shortened URL, the whole URL stays in the text, so copying it keeps the link.
 function CommitLink({
     url,
-    username,
+    handle,
     commit,
     isStatic,
 }: {
     url: string;
-    username: string;
+    handle: string;
     commit: string;
     isStatic: boolean;
 }) {
@@ -114,10 +123,10 @@ function CommitLink({
                 {/* The mark never wraps onto a line of its own. */}
                 <span className="whitespace-nowrap text-muted-foreground">
                     <AppLogoIcon className="mr-[0.2em] inline-block size-[1.15em] fill-foreground align-[-0.25em]" />
-                    {username.charAt(0)}
+                    {handle.charAt(0)}
                 </span>
                 <span className="text-muted-foreground">
-                    {username.slice(1)}/
+                    {handle.slice(1)}/
                 </span>
                 {hash}
             </span>
@@ -134,9 +143,9 @@ function CommitLink({
 
     return (
         <Link
-            href={CommitController.show({ user: username, commit })}
+            href={CommitController.show({ user: handle, commit })}
             title={url}
-            aria-label={`@${username}’s commit ${hash}`}
+            aria-label={`@${handle}’s commit ${hash}`}
             className="text-primary hover:underline"
         >
             {label}
@@ -231,7 +240,7 @@ function GitHubLink({
 
 function withPasteis(text: string, pasteisMode: boolean): ReactNode {
     if (!pasteisMode) {
-        return text;
+        return <CertificateText text={text} />;
     }
 
     return text
@@ -240,7 +249,7 @@ function withPasteis(text: string, pasteisMode: boolean): ReactNode {
         )
         .map((part, index) =>
             index % 2 === 0 ? (
-                part
+                <CertificateText key={index} text={part} />
             ) : (
                 <img
                     key={index}
@@ -255,17 +264,23 @@ function withPasteis(text: string, pasteisMode: boolean): ReactNode {
         );
 }
 
-function withWordmarks(text: string, pasteisMode: boolean): ReactNode[] {
+function withWordmarks(
+    text: string,
+    offset: number,
+    pasteisMode: boolean,
+): ReactNode[] {
     return text
         .split(
             /(?<![\p{L}\p{M}\p{N}_./-])(\/dev\/null)(?![\p{L}\p{M}\p{N}_/-])/u,
         )
         .map((part, index) =>
             index % 2 === 0 ? (
-                withPasteis(part, pasteisMode)
+                <Fragment key={`text-${offset}-${index}`}>
+                    {withPasteis(part, pasteisMode)}
+                </Fragment>
             ) : (
                 <span
-                    key={`wordmark-${index}`}
+                    key={`wordmark-${offset}-${index}`}
                     title={part}
                     className="font-semibold tracking-tight whitespace-nowrap"
                 >
@@ -275,10 +290,60 @@ function withWordmarks(text: string, pasteisMode: boolean): ReactNode[] {
         );
 }
 
+/**
+ * The hex colors found in the whole text that fall in this slice of it, as their value with a swatch of the color.
+ */
+function withColors(
+    text: string,
+    offset: number,
+    colors: Color[],
+    pasteisMode: boolean,
+): ReactNode[] {
+    const parts: ReactNode[] = [];
+    let position = 0;
+
+    for (const color of colors) {
+        const index = color.index - offset;
+
+        if (index < position || index + color.length > text.length) {
+            continue;
+        }
+
+        parts.push(
+            ...withWordmarks(
+                text.slice(position, index),
+                offset + position,
+                pasteisMode,
+            ),
+            <span
+                key={`color-${color.index}`}
+                className="whitespace-nowrap"
+                data-test="color"
+            >
+                <span
+                    aria-hidden="true"
+                    className="mr-0.5 inline-block size-[0.75em] rounded-sm border border-border align-[-0.05em]"
+                    style={{ backgroundColor: `#${color.value}` }}
+                />
+                {text.slice(index, index + color.length)}
+            </span>,
+        );
+
+        position = index + color.length;
+    }
+
+    parts.push(
+        ...withWordmarks(text.slice(position), offset + position, pasteisMode),
+    );
+
+    return parts;
+}
+
 function withMentions(
     text: string,
     offset: number,
     mentions: Commit['mentions'],
+    colors: Color[],
     pasteisMode: boolean,
     isStatic: boolean,
 ): ReactNode[] {
@@ -286,20 +351,25 @@ function withMentions(
     let position = 0;
 
     for (const match of text.matchAll(mentionPattern)) {
-        const username = match[1].toLowerCase();
+        const handle = match[1].toLowerCase();
         const userId =
-            mentions && Object.hasOwn(mentions, username)
-                ? mentions[username]
+            mentions && Object.hasOwn(mentions, handle)
+                ? mentions[handle]
                 : null;
 
         parts.push(
-            ...withWordmarks(text.slice(position, match.index), pasteisMode),
+            ...withColors(
+                text.slice(position, match.index),
+                offset + position,
+                colors,
+                pasteisMode,
+            ),
             isStatic || !userId ? (
                 match[0]
             ) : (
                 <UserPreview
                     key={`mention-${offset + match.index}`}
-                    user={{ username: match[1] }}
+                    user={{ handle: match[1] }}
                     userId={userId}
                 >
                     <Link
@@ -316,7 +386,14 @@ function withMentions(
         position = match.index + match[0].length;
     }
 
-    parts.push(...withWordmarks(text.slice(position), pasteisMode));
+    parts.push(
+        ...withColors(
+            text.slice(position),
+            offset + position,
+            colors,
+            pasteisMode,
+        ),
+    );
 
     return parts;
 }
@@ -326,13 +403,18 @@ export function LinkifiedText({
     mentions,
     pasteisMode = false,
     isStatic = false,
+    startsText = false,
 }: {
     text: string;
     mentions: Commit['mentions'];
     pasteisMode?: boolean;
     isStatic?: boolean;
+    // Whether the text is a whole body, so its start is the start of a line.
+    startsText?: boolean;
 }) {
     const parts: ReactNode[] = [];
+    // Colors are found in the prose only, for callers that pass a whole body, code included.
+    const colors = colorsIn(withoutCode(text), startsText);
     let position = 0;
 
     for (const match of text.matchAll(urlPattern)) {
@@ -351,6 +433,7 @@ export function LinkifiedText({
                 text.slice(position, match.index),
                 position,
                 mentions,
+                colors,
                 pasteisMode,
                 isStatic,
             ),
@@ -358,7 +441,7 @@ export function LinkifiedText({
                 <CommitLink
                     key={match.index}
                     url={linkText}
-                    username={commitLink[1]}
+                    handle={commitLink[1]}
                     commit={commitLink[2].toLowerCase()}
                     isStatic={isStatic}
                 />
@@ -396,6 +479,7 @@ export function LinkifiedText({
             text.slice(position),
             position,
             mentions,
+            colors,
             pasteisMode,
             isStatic,
         ),

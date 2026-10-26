@@ -22,7 +22,7 @@ export function FollowersYouKnow({
     user,
     preview,
 }: {
-    user: Pick<User, 'username'>;
+    user: Pick<User, 'handle'>;
     preview: FollowersYouKnowPreview;
 }) {
     if (preview.count === 0) {
@@ -61,7 +61,7 @@ export function FollowersYouKnow({
                             href={show(person)}
                             className="font-mono text-[13px] font-medium wrap-anywhere text-foreground hover:underline"
                         >
-                            @{person.username}
+                            @{person.handle}
                         </Link>
                     </Fragment>
                 ))}

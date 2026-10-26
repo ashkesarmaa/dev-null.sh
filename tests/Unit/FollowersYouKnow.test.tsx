@@ -7,10 +7,10 @@ import { renderToString } from 'react-dom/server';
 import { FollowersYouKnow } from '../../resources/js/components/followers-you-know';
 import type { User } from '../../resources/js/types';
 
-const person = (username: string) =>
-    ({ id: username, username, name: username, avatar_url: null }) as User;
+const person = (handle: string) =>
+    ({ id: handle, handle, name: handle, avatar_url: null }) as User;
 
-async function render(usernames: string[], count: number): Promise<string> {
+async function render(handles: string[], count: number): Promise<string> {
     const result = await createInertiaApp({
         page: {
             component: 'profile',
@@ -25,8 +25,8 @@ async function render(usernames: string[], count: number): Promise<string> {
         },
         resolve: () => () => (
             <FollowersYouKnow
-                user={{ username: 'octocat' }}
-                preview={{ users: usernames.map(person), count }}
+                user={{ handle: 'octocat' }}
+                preview={{ users: handles.map(person), count }}
             />
         ),
         render: renderToString,
